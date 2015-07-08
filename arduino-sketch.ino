@@ -1,20 +1,31 @@
 #include <EEPROM.h>
 
 byte samplesPerRead  = 1;    // number of samples per read
-int refResistance    = 1e+5; // resistance at 25 degrees C
-int seriesResistance = 1e+5; // resistance in series w/ the thermistor
+long refResistance    = 1e+5; // resistance at 25 degrees C -- can be unsigned
+long seriesResistance = 1e+5; // resistance in series w/ the thermistor
 
 void setup(){
     // Step 1: load configuration from EEPROM
-    load_config();
+    //load_config();
     // Step 2: setup serial communication
-    Serial.begin(9600);
+    Serial.begin(9600); // Seems like on the 8MHz this is actually 4800 baud
+    Serial.println("Ready!");
 }
 
 
+// Appearantly readUntil doesn't have the 64 character limitation
+String inputData;
 void loop(){
     // Enter command mode and listen to commands.
     // Depending on the command, execute the instructions given
+    if (Serial.available() > 0){
+        inputData = Serial.readStringUntil('\n');
+
+        // if (inputData.equalsIgnoreCase("Hello")){
+        //     Serial.println(refResistance);
+        // }
+    }
+    Serial.flush();
 }
 
 
