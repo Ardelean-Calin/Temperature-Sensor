@@ -28,9 +28,22 @@ def get_temperature(resistance=1e+5, rref=1e+5):
 
 # Calculates the resistance of the thermistor given its
 # current temperature and its resistance at 25 °C
-def get_resistance(temperature=298.15, rref=1e+5):
+#                       or
+# Calculater R25 given R and T
+#
+# res is either current measured resistance or R25, depending on case
+def get_resistance(temperature=298.15, res=1e+5, return_ref=False):
     # The Reverse Steinhart Hart Equation: http://i.imgur.com/wiIVNyj.png
     power = _A + _B / temperature + _C / math.pow(temperature, 2)\
         + _D / math.pow(temperature, 3)
-    # Return the result, in Ω with 0 digit precision (aka integer)
-    return round(rref * math.exp(power))
+
+    if return_ref is True:
+        # Return the resistance at 25 C for calibration purposes
+        return round(res / math.exp(power))
+    else:
+        # Return the result, in Ω with 0 digit precision (aka integer)
+        return round(res * math.exp(power))
+
+if __name__ == '__main__':
+    result = get_resistance(318.5, 41422, True)
+    print(result)
