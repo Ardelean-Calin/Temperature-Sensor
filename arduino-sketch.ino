@@ -5,7 +5,7 @@
 
 const int TPIN = A0;
 
-byte samplesPerRead  = 2;    // number of samples per read
+int samplesPerRead  = 2;    // number of samples per read
 
 const byte STRLEN = 255;    // maximum length of a command
 char commandString[STRLEN]; // the string containing the full command
@@ -15,8 +15,6 @@ Timer t;
 int sampleEvent, stopEvent;
 
 void setup(){
-    // Step 1: load configuration from EEPROM
-    //load_config();
     // Step 2: setup serial communication
     Serial.begin(9600); // Seems like on the 8MHz this is actually 4800 baud
     Serial.println("Ready");
@@ -35,7 +33,8 @@ void loop(){
         Serial.println(commandString);
         command = commandString[0];
         switch (command) {
-            case 's':
+
+            case 's': // sample
                 long stopTime; // int would mean max 31s
                 long delayBetweenSamples; // int would mean max 31s
 
@@ -49,15 +48,31 @@ void loop(){
                 sampleEvent = t.every(delayBetweenSamples, sample_data);
                 // Stops all timers after the given time
                 stopEvent   = t.after(stopTime, stop_timers); // will maybe take 1 less sample than expected.
-              break;
-            case 'h':
-              stop_timers();
+                break;
 
-              break;
+            case 'c': // config internal variables (maybe even reference voltage and gain?)
+                sscanf(commandString, "%*s %d", &samplesPerRead);
+                Serial.println(samplesPerRead);
+                break;
+
+            case 'v': // set reference voltage
+
+                break;
+
+            case 'o': // one-time sample and return
+                sample_data();
+                break;
+
+            case 'h': // halt
+                stop_timers();
+                break;
+
             default:
                 Serial.println("Command invalid!");
         }
     }
+
+
     while(Serial.read() != -1); // clear the serial buffer
 
     for(int i=0; i<STRLEN; i++) // clear my string
@@ -88,23 +103,5 @@ void stop_timers(){
     Serial.println("Stopped timers");
     t.stop(sampleEvent);
     t.stop(stopEvent);
-}
-
-// Loads the configuration variables from EEPROM. These are:
-// samples per read - address 0         (1 byte)
-// resistance at 25 C - address 1-5     (4 bytes)
-void load_config(){
-    EEPROM.get(0, samplesPerRead); // read from address 0
-    //EEPROM.get(1, refResistance);  // read from address 1
-}
-
-
-// Saves current global values to EEPROM
-// Since the EEPROM has about 100 000 write/erase cycles
-// updating writes to the EEPROM only if the value has
-// changed, therefor not using erase cycles when unnecessary
-// put() can put any data type into memory.
-void save_config(){
-    EEPROM.put(0, samplesPerRead); // samples at address 0
-    //EEPROM.put(1, refResistance);  // R25 at address 1-5 (4 bytes)
+    // Send serial data to know that I've stopped
 }
