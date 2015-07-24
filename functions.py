@@ -38,27 +38,28 @@ def get_temperature(resistance=1e+5, rref=1e+5):
     return to_celsius(temperature)
 
 
+# The Reverse Steinhart Hart Equation: http://i.imgur.com/wiIVNyj.png
+
 # Calculates the resistance of the thermistor given its
 # current temperature and its resistance at 25 °C
 def get_resistance(temperature, reference_resistance=1e+5):
-    # The Reverse Steinhart Hart Equation: http://i.imgur.com/wiIVNyj.png
-    power = _A + _B / temperature + _C / math.pow(temperature, 2)\
+    e_pow = _A + _B / temperature + _C / math.pow(temperature, 2)\
         + _D / math.pow(temperature, 3)
 
-    # Return the resistance, in Ω with 0 digit precision (aka integer)
-    return round(reference_resistance * math.exp(power))
+    return round(reference_resistance * math.exp(e_pow))
 
 
 # Get the resistance at 25 C according to the current temperature (K)
 # and resistance (ohm)
 def get_reference_resistance(temperature, resistance):
-    # The Reverse Steinhart Hart Equation: http://i.imgur.com/wiIVNyj.png
-    power = _A + _B / temperature + _C / math.pow(temperature, 2)\
+    e_pow = _A + _B / temperature + _C / math.pow(temperature, 2)\
         + _D / math.pow(temperature, 3)
 
-    return round(resistance / math.exp(power))
+    return round(resistance / math.exp(e_pow))
 
 if __name__ == '__main__':
-    print(get_temperature(110000))
-    result = get_resistance(to_kelvin(22.93), 100000)
-    print(result)
+    print(get_temperature(81720))
+    print(get_temperature(82720))
+    print("hello world!")
+    # result = get_resistance(to_kelvin(21.97), 100000)
+    # print(result)
