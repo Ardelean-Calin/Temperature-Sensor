@@ -15,7 +15,8 @@ void setup(){
     // Step 2: setup serial communication
     Serial.begin(9600); // Seems like on the 8MHz this is actually 4800 baud
     Wire.begin();       // Start i2c communication as Master
-    Serial.println("Ready");
+    Serial.println();   // Send an \r\n so that I can detect that the serial
+                        // connection has been successfully started
 }
 
 
@@ -37,6 +38,9 @@ void loop(){
 
                 sscanf(commandString, "%*s %d %d", &pot, &voltage);
                 set_pot(pot, voltage);
+
+                delay(100);
+                sample_data(pot+1); // A1 or A2
                 break;
 
             case 'o': // one-time-sample
@@ -50,8 +54,8 @@ void loop(){
                 sample_data(pin_to_read);
                 break;
 
-            default:
-                Serial.write("Command invalid!");
+            default:;
+
         }
     }
 
@@ -72,7 +76,7 @@ void sample_data(int pin){
         sampleValue += analogRead(pin);
     sampleValue /= samplesPerRead;
 
-    Serial.println(sampleValue);
+    Serial.println(sampleValue);  // !!!
 
     // !!! Send data through serial !!!
     // Serial.write(sampleValue);

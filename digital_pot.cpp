@@ -14,10 +14,3 @@ void set_pot(uint8_t pot, uint8_t value){
     Wire.write(value);
     Wire.endTransmission();
 }
-
-int read_pot(int sense_pin){
-    // returns the value of the voltage at the pot using
-    // the given sense pin
-    delay(100);
-    return analogRead(sense_pin);
-}
