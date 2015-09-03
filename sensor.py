@@ -66,7 +66,7 @@ class Sensor:
             # If there were more than 1 empty bytes
             # (the first one is always empty I think)
             if i > 1:
-                print("Connection timed out. Reconnecting.")
+                # print("Connection timed out. Reconnecting.")
                 return -1
 
         # Join the characters and cut the whitespace and \r \n characters.

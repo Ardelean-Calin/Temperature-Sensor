@@ -114,16 +114,6 @@ def extract_time(time_string):
     return h * 3600 + m * 60 + s
 
 
-# def every(run_time, t, func):
-#    """Runs the given function for a specified amount of time every t seconds.
-#    """
-#    start_time = time.time()
-#    iters = round(run_time/t)
-#    for i in range(1, iters + 1):
-#        func()
-#        time.sleep(start_time + i*t - time.time())
-
-
 if __name__ == '__main__':
     r = res_from_voltage(1.57)
     print(r)
