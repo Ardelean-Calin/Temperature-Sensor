@@ -38,7 +38,6 @@ def measure(vref, gain, duration, delay, file_name):
     data = np.zeros(shape=(max_iterations, 2))  # array full of 0's
 
     plt.ion()  # turn interactive mode on
-    plt.draw()
 
     with sensor.Sensor(port, baudrate=9600, timeout=1) as arduino:
         arduino.set_gain(gain)
