@@ -119,6 +119,7 @@ def check_if_file_exists(filename):
 def main():
     if len(sys.argv) < 2:
         print("Unsufficient parameters. Try again. ")
+        print("Example: ./main.py measure 10 40 25m30s 10s simulare")
         sys.exit(0)
     command = sys.argv[1]
 
