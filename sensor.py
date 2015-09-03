@@ -2,26 +2,37 @@ import math
 import serial
 import time
 
-import constants
-import functions
+import constants as c
+import functions as f
 
 
 class Sensor:
+    gain = 0.0
+    vref = 0.0
+
     def __init__(self, device_path, baudrate=9600, timeout=1):
         self.connection = serial.Serial(device_path, baudrate, timeout=timeout)
         # Wait for connection to be established
         while self.connection.read(1) != b'\n':
             pass
+        print("\nConnection established!")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+        print("\nConnection closed successfully!")
 
     def _convert(self, voltage, max_value=256):
         """Converts the given voltage to a whole number from 0 to max_value.
         """
-        return round(voltage * max_value / constants.MAX_VOLTAGE)
+        return round(voltage * max_value / c.MAX_VOLTAGE)
 
     def _convert2(self, value, max_value=256):
         """Converts the given value to a voltage from 0 to 3.3V
         """
-        return value * constants.MAX_VOLTAGE / max_value
+        return value * c.MAX_VOLTAGE / max_value
 
     def _send_command(self, command):
         """Executes command and returns the string representaion of the result.
@@ -33,6 +44,8 @@ class Sensor:
         """
         self.connection.write(command.encode("utf-8"))
         response = self._get_response(self.connection)
+        if response == -1:  # Means we timed out. Try again.
+            return self._send_command(command)
         return response
 
     def _get_response(self, connection):
@@ -42,12 +55,30 @@ class Sensor:
         Only afterwards does it advance to the next step.
         """
         response = [' ']
+        i = 0
         while response[-1] != '\n':
             # Reads byte by byte and converts to characters.
-            response.append(connection.read(1).decode())
+            rbyte = connection.read(1).decode()
+            response.append(rbyte)
+            # Timeout protection
+            if len(rbyte) == 0:
+                i += 1
+            # If there were more than 1 empty bytes
+            # (the first one is always empty I think)
+            if i > 1:
+                print("Connection timed out. Reconnecting.")
+                return -1
+
         # Join the characters and cut the whitespace and \r \n characters.
         response = ''.join(response)[1:-2]
         return response
+
+    def _read_voltage(self):
+        """Returns the voltage at the Analog Sense Pin rounded to 3 decimals.
+        """
+        command = "o"
+        voltage = float(self._send_command(command))
+        return round(self._convert2(voltage, max_value=1024), 3)
 
     def close(self):
         """Closes the serial connection.
@@ -65,7 +96,9 @@ class Sensor:
         command = "v 0 {}".format(byte_voltage)
         response = float(self._send_command(command))
         true_voltage = self._convert2(value=response, max_value=1024)
-        return round(true_voltage, 3)
+
+        self.vref = round(true_voltage, 3)
+        return self.vref
 
     def set_gain(self, gain):
         """Sets the gain of the precision amplifier. Returns the actual gain.
@@ -79,14 +112,19 @@ class Sensor:
         value = math.ceil(256.0/gain) - 1
         command = "v 1 {}".format(value)
         self._send_command(command)
-        return 256.0/value
 
-    def read_voltage(self):
-        """Returns the voltage at the Analog Sense Pin rounded to 3 decimals.
+        self.gain = round(256.0/value, 3)
+        return self.gain
+
+    def get_temp(self):
+        """Returns the temperature of the thermistor in degrees C.
         """
-        command = "o"
-        voltage = float(self._send_command(command))
-        return round(self._convert2(voltage, max_value=1024), 3)
+        voltage = self._read_voltage()
+        t_voltage = f.get_thermistor_voltage(voltage, self.vref, self.gain)
+        res = f.res_from_voltage(t_voltage)
+        t = f.temp_from_res(res, rref=c.REFERENCE_RESISTANCE)
+
+        return f.to_celsius(t)
 
 if __name__ == "__main__":
     arduino = Sensor("/dev/ttyUSB0")
@@ -97,16 +135,8 @@ if __name__ == "__main__":
         v = arduino.set_ref_voltage(1)
         gain = arduino.set_gain(2)
         while True:
-            x = arduino.read_voltage()
-            t_v = functions.get_thermistor_voltage(
-                voltage=x,
-                vref=v,
-                gain=gain
-            )
-            res = functions.res_from_voltage(t_v)
-            temp = functions.temp_from_res(resistance=res, rref=1e+5)
-            temp = functions.to_celsius(temperature=temp, precision=2)
-            print(x, res, temp)
+            x = arduino.get_temp()
+            print(x)
     finally:
         print("Closed")
         arduino.close()

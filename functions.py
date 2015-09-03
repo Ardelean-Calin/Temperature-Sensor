@@ -45,10 +45,10 @@ def temp_from_res(resistance=1e+5, rref=1e+5):
 
 # Calculates the resistance of the thermistor given its
 # current temperature and its resistance at 25 °C
-def res_from_temp(temperature, reference_resistance=1e+5):
+def res_from_temp(temperature):
+    reference_resistance = constants.REFERENCE_RESISTANCE
     e_pow = _A + _B / temperature + _C / math.pow(temperature, 2)\
         + _D / math.pow(temperature, 3)
-
     return round(reference_resistance * math.exp(e_pow))
 
 
@@ -76,6 +76,22 @@ def res_from_voltage(voltage):
     return round(100000.0 * voltage / (constants.MAX_VOLTAGE - voltage))
 
 
+def voltage_from_res(resistance):
+    """Given the resistance in series, calculate the voltage drop.
+    """
+    supply = constants.MAX_VOLTAGE
+    ser_res = constants.SERIES_RESISTANCE
+    return round(supply * resistance / (resistance + ser_res), 6)
+
+
+def gain_from_voltage(v1, v2):
+    """Given the maximum and minimum voltage on the thermistor, calculate
+    the optimum gain.
+    """
+    d = max(v1, v2) - min(v1, v2)
+    return constants.MAX_VOLTAGE/d
+
+
 def extract_time(time_string):
     """Returns an int representing the number of seconds in the given
     time_string. time_string should be of format: XhYmZs.
@@ -95,7 +111,18 @@ def extract_time(time_string):
     m = 0 if len(m) is 0 else int(m[0])
     s = 0 if len(s) is 0 else int(s[0])
 
-    return h*3600 + m*60 + s
+    return h * 3600 + m * 60 + s
+
+
+# def every(run_time, t, func):
+#    """Runs the given function for a specified amount of time every t seconds.
+#    """
+#    start_time = time.time()
+#    iters = round(run_time/t)
+#    for i in range(1, iters + 1):
+#        func()
+#        time.sleep(start_time + i*t - time.time())
+
 
 if __name__ == '__main__':
     r = res_from_voltage(1.57)
